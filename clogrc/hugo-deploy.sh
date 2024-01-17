@@ -1,68 +1,39 @@
-#  clog> stage
-# short> execute stage.sh to build & upload {{REPO}} to staging
-# extra>  execute stage.sh to build & upload {{REPO}} to staging. No other option needed. Edit script to configure upload.
-#        _                                             _
-#   __  | |  ___   __ _     ___  __ _   _ __    _ __  | |  ___
-#  / _| | | / _ \ / _` |   (_-< / _` | | '  \  | '_ \ | | / -_)
-#  \__| |_| \___/ \__, |   /__/ \__,_| |_|_|_| | .__/ |_| \___|
-#                 |___/                        |_|
+#  clog> deploy
+# short> upload docker image to docker hub
+# extra>  no support for TGZ as yet
+#   _                                   _                _
+#  | |_    _  _   __ _   ___   ___   __| |  ___   _ __  | |  ___   _  _
+#  | ' \  | || | / _` | / _ \ |___| / _` | / -_) | '_ \ | | / _ \ | || |
+#  |_||_|  \_,_| \__, | \___/       \__,_| \___| | .__/ |_| \___/  \_, |
+#                |___/                           |_|               |__/
 
-source clogrc/core/inc.sh
-thisFolder=$(pwd)
-REPO=$(basename $thisFolder)
-PROJECT="Project(${cS}$REPO${cT})"
-fInfo "$PROJECT script$cF $(basename $0)"
-# ------------------------------------------------------------------------------
+[ -f clogrc/check.sh ] && source clogrc/check.sh  ignore-errors     # preflight
+printf "${cC}Build$cT Project$cS $PROJECT$cT built on $bCPU $bOSV$cX\n"
 
- CACHE=$MM_CACHE
-   BOT=$MM_BOT
-BRANCH="staging"
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# check the build
 
-if [ -z $CACHE ] ; then fError "env$cE MM_CACHE$cT is not set" ; exit 1 ; fi
-if [ -z $BOT ]   ; then fError "env$cE MM_BOT$cT is not set" ; exit 1 ; fi
-if [ -z $REPO ]  ; then fError "env$cE GITPOD_REPO_ROOT$cT is not set" ; exit 1 ; fi
+repo="mrmxf/"    ; [ -n "$otsgREPO" ]    && repo="$otsgREPO"
+base=$pNAME      ; [ -n "$otsgBASE" ]    && base="$otsgBASE"
+armx="arm"       ; [ -n "$otsgARMx" ]    && armx="$otsgARMx"
+amdx="amd"       ; [ -n "$otsgAMDx" ]    && amdx="$otsgAMDx"
+tver=$vREF       ; [ -n "$otsgLABv" ]    && tver="$otsgLABv"
 
-SRC="opentpg + libs"
+bHEADING=(     "${cH}    arm64${cT}"      "${cI}Intel-AMD${cT}"   )
+bTARGET=(      "linux/arm64"              "linux/amd64"           )
+bHUBimage=(    "$repo$base-$armx:$tver"   "$repo$base-$amdx:$tver")
+bTGZfilename=( "$base-$armx-$trel.tgz"    "$base-$amdx-$trel.tgz" )
+bHashCache=(   "tmp/id-docker-arm.txt"    "tmp/id-docker-amd.txt" )
 
-OPT="--include \"*\" "
-ACTION=Upload
+fDivider
+for i in ${!bHUBimage[@]}; do
+  printf "${cI}INFO ${bHEADING[$i]} push to hub $cT(ctrl-C to abort)$cX\n"
 
-# do preflight checks & abort if user does not want to continue
-source clogrc/core/s3sync.sh
-fValidate
-# ------------------------------------------------------------------------------
+  #printf "${cH}DEBUG$cT platform=$cC%s$cT node=$cC%s$cT " "${bTARGET[$i]}" "${bARGnode[$i]}"
+  #printf "lib=$cC%s$cT tag1=$cC%s$cT tag2=$cC%s$cX\n"      "$SeventhSO"     "${bHUBimage[$i]}"  "${bTAGimage[$i]}"
 
-#define the folders to sync(upload) - one per line
-# SYNCS=(
-#   "$OPT site/folder1   $CACHE/$BOT/$BRANCH/$REPO/folder1"
-#   "$OPT site/folder2   $CACHE/$BOT/$BRANCH/$REPO/folder2"
-# )
+  docker image push --quiet "${bHUBimage[$i]}"
+  [ $? -gt 0 ] && printf "${cE}FAIL ${bHEADING[$i]} push to hub$cX\n" && exit 1
 
-# do sync
-# fSync
-
-EXE="lamd-otpg"
-ZIP="$EXE-so.zip"
-
-# do anything remedial like single file copies here....
-fInfo "$PROJECT create$cF $ZIP$cX"
-zip -j tmp/$ZIP lib/*
-
-fInfo "$PROJECT sync$cF tmp/$ZIP"
-aws s3 cp         ./tmp/$ZIP           $CACHE/$BOT/$BRANCH/get/$ZIP
-
-fInfo "$PROJECT removing .zip"
-rm $ZIP
-
-# ------------------------------------------------------------------------------
-fInfo "$PROJECT sync$cF tpg builds"
-
-source clogrc/build-variants.sh
-
-for (( i=0; i<${#gOS[@]}; i++ ));
-do
-  fInfo "sync ${cVER[$i]}${FILE[$i]}${cT} (${gOS[$i]} for ${gARCH[$i]})"
-  aws s3 cp       ./${FILE[$i]}               $CACHE/$BOT/$BRANCH/get/${FILE[$i]}
+  printf "${cS}SUCCES ${bHEADING[$i]} pushed to hub.$cX\n"
 done
-
-aws s3 cp         ./clogrc/opentsg-installer.sh     $CACHE/$BOT/$BRANCH/get/opentsg-install.cmd
