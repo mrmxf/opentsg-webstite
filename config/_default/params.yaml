@@ -175,3 +175,8 @@ site:
     url: docs/reference/project/privacy/
     icon: "fab fa-user-shield"
     desc: "metarex.media privacy policy"
+
+history:
+  - date: "2024-01-17"
+    version: "v0.2.0"
+    release: "hackathon update"

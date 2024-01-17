@@ -12,7 +12,7 @@ yarn.lock
 
 # ignore the hugo & mrmxf build artifacts
 .hugo_build.lock
-clogrc/
+clogrc/core
 
 # ignore the tmp folder but not the readme inside it
 tmp/*

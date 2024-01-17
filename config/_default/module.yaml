@@ -6,11 +6,11 @@
 
 # uncomment line below for temporary local development of module
 # replacements: "github.com/google/docsy -> ../../docsy"
-# hugoVersion:
-#   extended: true
-#   min: v0.95.0
-# imports:
-#   - path: github.com/google/docsy
-#     disable: false
+hugoVersion:
+  extended: true
+  min: v1.121.0
+imports:
+  - path: github.com/mrmxf/fohuw
+    disable: false
 #   - path: github.com/google/docsy/dependencies
 #     disable: false

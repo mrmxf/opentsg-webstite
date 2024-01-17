@@ -23,14 +23,13 @@ resources:
     download: true
     description: Our Logo as an MP4.
     group: Demo
-- name: tutorial02png
-  title: An Example from the Tutorials
-  # this file is uploaded directly to the host and is not in GitHub
-  src: /downloads/02-builtin.textbox.png
+- name: start.cmd
+  title: Start script for local docker execution
+  src: /downloads/start.cmd
   params:
-    icon: file image outline
+    icon: file code outline
     download: true
-    description: An example pattern from the tutorial
+    description: Start script for local docker execution
     group: Demo
 # ------------------------------------------------------------------------------
 
